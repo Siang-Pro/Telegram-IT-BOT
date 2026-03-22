@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telegram IT BOT — 管理後台</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section id="login-panel" class="card">
+        <h1>Telegram IT BOT — 管理後台登入</h1>
+        <form id="login-form">
+          <label>帳號 <input type="text" name="username" autocomplete="username" required /></label>
+          <label>密碼 <input type="password" name="password" autocomplete="current-password" required /></label>
+          <button type="submit">登入</button>
+          <p id="login-error" class="error" hidden></p>
+        </form>
+      </section>
+
+      <div id="main-panel" hidden>
+        <header class="topbar">
+          <h1>Telegram IT BOT</h1>
+          <div class="topbar-actions">
+            <a
+              class="icon-link github-link"
+              href="https://github.com/Siang-Pro/Telegram-IT-BOT"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub 專案"
+              title="GitHub"
+            >
+              <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.694.825.576C20.565 21.795 24 17.31 24 12c0-6.63-5.37-12-12-12z"
+                />
+              </svg>
+            </a>
+            <button type="button" id="logout-btn">登出</button>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <button type="button" class="tab active" data-tab="settings">設定</button>
+          <button type="button" class="tab" data-tab="whitelist">白名單</button>
+          <button type="button" class="tab" data-tab="logs">對話日誌</button>
+        </nav>
+
+        <section id="tab-settings" class="card tab-pane">
+          <h2>系統與 API 設定</h2>
+          <p class="hint">更新 Telegram Bot Token 後請重啟 Node 程序（若使用 pm2，請改為你的程序名稱，例如 <code>pm2 restart telegram-it-bot</code>）。</p>
+          <form id="settings-form">
+            <label>
+              非白名單回覆（可用 <code>{user_id}</code>、<code>{username}</code>）
+              <textarea name="non_whitelist_reply" rows="4"></textarea>
+            </label>
+            <label>
+              Google Safe Browsing API Key（<code>/safe</code>）
+              <input type="password" name="google_safe_browsing_key" autocomplete="off" />
+            </label>
+            <label>
+              Telegram Bot Token（留空則不變更）
+              <input type="password" name="telegram_bot_token" autocomplete="off" />
+            </label>
+            <button type="submit">儲存</button>
+          </form>
+          <p id="settings-msg" class="msg"></p>
+        </section>
+
+        <section id="tab-whitelist" class="card tab-pane" hidden>
+          <h2>白名單</h2>
+          <form id="wl-add-form" class="inline-form">
+            <input type="number" name="telegram_user_id" placeholder="Telegram User ID" required />
+            <input type="text" name="username" placeholder="Username（選填）" />
+            <button type="submit">新增</button>
+          </form>
+          <p id="wl-msg" class="msg"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Username</th>
+                  <th>加入時間</th>
+                  <th>狀態</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="wl-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tab-logs" class="card tab-pane" hidden>
+          <h2>對話日誌</h2>
+          <form id="logs-filter" class="inline-form">
+            <input type="number" name="user_id" placeholder="篩選 User ID（選填）" />
+            <button type="submit">篩選</button>
+            <button type="button" id="logs-reset">清除篩選</button>
+            <button type="button" id="logs-delete-all" class="danger">全部清除</button>
+          </form>
+          <p id="logs-msg" class="msg"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>時間</th>
+                  <th>User ID</th>
+                  <th>白名單</th>
+                  <th>內容</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="logs-body"></tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <button type="button" id="logs-prev">上一頁</button>
+            <span id="logs-page-info"></span>
+            <button type="button" id="logs-next">下一頁</button>
+          </div>
+        </section>
+      </div>
+
+      <footer class="site-footer">
+        <p class="footer-line">
+          <a
+            class="footer-shine"
+            href="https://siang.pro"
+            target="_blank"
+            rel="noopener noreferrer"
+            >© <span id="footer-year"></span> Telegram IT BOT. All rights reserved. Design by Siang.Pro</a>
+        </p>
+      </footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
